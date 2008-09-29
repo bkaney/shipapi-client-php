@@ -1,1 +1,12 @@
 ShipAPI Client for PHP5
+-----------------------
+
+
+Required Extensions:
+
+ * php_openssl.dll
+
+
+Style Guide:
+
+ Following the style guide for the Zend Framework.
