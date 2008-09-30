@@ -1,9 +1,5 @@
 <?php
 
-require_once('ShipApi/Error.php');
-require_once('ShipApi/Comm.php');
-
-
 class ShipApi
 {
 
@@ -23,7 +19,6 @@ class ShipApi
      * @var string
      */
     public static $apiKey = null;
-
 
     /**
      * Constructor for the ShipAPI object.

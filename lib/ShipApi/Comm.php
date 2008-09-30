@@ -15,7 +15,7 @@ require_once('Zend/Rest/Client.php');
  * rather is is used by ShipApi.
  *
  */
-class ShipApi_Comm 
+class ShipApi_Communication 
 {
     public $request = null;
     public $response = null;
@@ -30,8 +30,9 @@ class ShipApi_Comm
 
     public function openConnection()
     {
-//        try {
+        try {
             $this->_handle = fopen($this->shipApi->SHIPAPI_URI, "r");
-//        }
+        } catch (Exception $e) {
+        }
     }
 }

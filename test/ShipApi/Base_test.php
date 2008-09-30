@@ -1,13 +1,13 @@
 <?php
 
-require_once('ShipApi/Base.php');
-
-class ShipApi_Base_test extends UnitTestCase {
+class ShipApi_Base_test extends UnitTestCase
+{
 
     public $username;
     public $apiKey;
 
-    public function setUp() {
+    public function setUp() 
+    {
         $this->username = 'joe';
         $this->apiKey = '123456';
     }

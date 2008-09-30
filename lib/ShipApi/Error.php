@@ -1,4 +1,4 @@
 <?php
 
-class ShipApi_Error extends Exception {}
-
+class ShipApi_Error extends Exception
+{ }
