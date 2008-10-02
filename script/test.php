@@ -13,7 +13,10 @@ require_once('ShipApi.php');
 
 // TODO: Create a dynamic test harness here...
 require_once('test/ShipApi/Base_test.php');
-$test = &new ShipApi_Base_test();
-$test->run(new TextReporter());
+$test = &new shipapi_base_test();
+$test->run(new textreporter());
 
 
+require_once('test/ShipApi/Request_test.php');
+$test = &new shipapi_request_test();
+$test->run(new textreporter());

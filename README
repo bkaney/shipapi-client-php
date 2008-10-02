@@ -7,22 +7,17 @@ by http://www.shipapi.com ShipAPI.
 
 REQUIREMENTS:
 
- * php5
- * php_openssl.dll
+  * php5
+  * php_openssl.dll
 
 
 SYNOPSIS:
 
-To use ShipAPI, you can set the class constant ShipAPI::URI, then 
-require the class.
-
-   ShipApi::URI = 'https://live.shipapi.com';
-   require_once("ShipApi.php");
-
 First, you create a new ShipApi object, passing in the username and
-apiKey.
+apiKey and the ShipAPI URI.
 
-   $shipApi = new ShipApi("username", "1234567890abcdefg");
+   require_once("ShipApi.php");
+   $shipApi = new ShipApi("username", "1234567890abcdefg", "https://live.shipapi.com");
 
 Then you can make requests to the ShipApi service.  Please refer to
 the http://www.shipapi.com/api API-Guide for more information.
@@ -41,17 +36,17 @@ Here are a few examples:
    # This will do an HTTP PUT for /users/1981
    $return = $shipApi->put('/users/1981', $userUpdateData);
 
-The return for these methods is a ShipApi_Resonse object.  This object
-will contain the HTTP resonse, as well as the body (both in XML form, 
-as well as serialized as a PHP array/hash).
+The return for these methods is a Zend_Rest_Client_Response object.
 
-   $return->http;  # HTTP object
-   $return->xml;   # The XML as a string
-   $return->data;  # The XML serialized as PHP named array
+   $return->isSuccess();            # If it was a success
+   $return->result;                 # The result
+   $return->result->id();           # The id property
+   $return->result->company();      # The company property
 
 
 STYLE GUIDE:
 
 We are following the style guide for the Zend Framework.
-  http://framework.zend.com/manual/en/coding-standard.coding-style.html
+
+  * http://framework.zend.com/manual/en/coding-standard.coding-style.html
 
