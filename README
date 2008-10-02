@@ -13,8 +13,8 @@ REQUIREMENTS:
 
 SYNOPSIS:
 
-To use ShipAPI, you can set the class constant @see ShipAPI::URI,
-then require the class.
+To use ShipAPI, you can set the class constant ShipAPI::URI, then 
+require the class.
 
    ShipApi::URI = 'https://live.shipapi.com';
    require_once("ShipApi.php");
@@ -30,25 +30,24 @@ the http://www.shipapi.com/api API-Guide for more information.
 Here are a few examples:
 
    # This will do a HTTP GET for /shipments
-   $return = $shipApi->get('shipments');
+   $return = $shipApi->get('/shipments');
 
    # This will do a HTTP POST for /shipments/15/packages
-   $return = $shipApi->post('shipments/15/packages', $packageData);
+   $return = $shipApi->post('/shipments/15/packages', $packageData);
 
    # This will do a HTTP DELETE for /shipments/15/packages/1
-   $return = $shipApi->delete('shipments/packages/1');
+   $return = $shipApi->delete('/shipments/packages/1');
 
    # This will do an HTTP PUT for /users/1981
-   $return = $shipApi->put('users/1981', $userUpdateData);
+   $return = $shipApi->put('/users/1981', $userUpdateData);
 
-The return for these methods is a @see ShipApi_Resonse object.  This
-object will contain the HTTP resonse, as well as the body (both in 
-XML form, as well as serialized as a PHP array/hash).
+The return for these methods is a ShipApi_Resonse object.  This object
+will contain the HTTP resonse, as well as the body (both in XML form, 
+as well as serialized as a PHP array/hash).
 
    $return->http;  # HTTP object
    $return->xml;   # The XML as a string
    $return->data;  # The XML serialized as PHP named array
-
 
 
 STYLE GUIDE:
