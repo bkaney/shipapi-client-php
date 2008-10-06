@@ -20,3 +20,5 @@ $test->run(new textreporter());
 require_once('test/ShipApi/Request_test.php');
 $test = &new shipapi_request_test();
 $test->run(new textreporter());
+$test = &new shipapi_request_static_methods_test();
+$test->run(new textreporter());

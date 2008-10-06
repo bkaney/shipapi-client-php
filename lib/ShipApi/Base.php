@@ -11,7 +11,7 @@ class ShipApi
     /**
      * The URI for ShipAPI to communicate to. 
      */
-     public static $base_uri = 'https://test.shipapi.com';
+     public static $baseUri = 'https://test.shipapi.com';
 
     /**
      * The username
@@ -41,7 +41,7 @@ class ShipApi
         $this->username = $username;
         $this->apiKey = $apiKey;
         if ($baseUri) {
-            $this->baseUri = $uri;
+            $this->baseUri = $baseUri;
         }
     }
 
@@ -69,7 +69,7 @@ class ShipApi
     private function sendRequest($method, $resource, array $data=null)
     {
         $this->request = new ShipAPI_Request($this);
-        return $this->request->send($method,$resource,$data);
+        return $this->request->sendRequest($method,$resource,$data);
     }
 
 }
