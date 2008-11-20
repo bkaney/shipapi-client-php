@@ -8,17 +8,24 @@ ini_set('include_path', ini_get('include_path').':'.
 
 require_once('simpletest/unit_tester.php');
 require_once('simpletest/reporter.php');
+require_once('simpletest/mock_objects.php');
+require_once('simpletest/autorun.php');
 
 require_once('ShipApi.php');
 
-// TODO: Create a dynamic test harness here...
-require_once('test/ShipApi/Base_test.php');
-$test = &new shipapi_base_test();
-$test->run(new textreporter());
+class AllTests extends TestSuite {
+    function AllTests() {
+        $this->TestSuite('All Tests');
+        $this->addFile('test/ShipApi/Base_test.php');
+        $this->addFile('test/ShipApi/Request_test.php');
+    }
+}
 
 
-require_once('test/ShipApi/Request_test.php');
-$test = &new shipapi_request_test();
-$test->run(new textreporter());
-$test = &new shipapi_request_static_methods_test();
-$test->run(new textreporter());
+if (!defined('RUNNER')) {
+    define('RUNNER', true);
+    $test = &new AllTests();
+    $test->run(new TextReporter());
+}
+
+

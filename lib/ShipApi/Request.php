@@ -13,14 +13,15 @@ class ShipApi_Request
     {
         $this->shipApi = $shipApi;
         $this->_zendRestClient = new Zend_Rest_Client;
-        $this->_zendRestClient->username($this->shipApi->username);
-        $this->_zendRestClient->apikey($this->shipApi->apiKey);
+        #$this->_zendRestClient->username($this->shipApi->username);
+        #$this->_zendRestClient->apikey($this->shipApi->apiKey);
     }
 
     public function sendRequest($method,$resource,array $data=null)
     {
         $fullUri = ShipApi_Request::parseUri($this->shipApi->baseUri, $resource);
         $rootNodeName = ShipApi_Request::parseNode($resource);
+        $this->_zendRestClient->setAuth($this->shipApi->username, $this->shipApi->apiKey);
         $this->_zendRestClient->setUri($fullUri);
         $this->_zendRestClient->$rootNodeName($data);
         return $this->_zendRestClient->$method();

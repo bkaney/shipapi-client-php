@@ -16,7 +16,7 @@
  * @package   Zend_Uri
  * @copyright Copyright (c) 2005-2008 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd     New BSD License
- * @version   $Id: Http.php 9656 2008-06-10 16:21:13Z dasprid $
+ * @version   $Id: Http.php 12041 2008-10-20 22:13:01Z shahar $
  */
 
 /**
@@ -40,6 +40,15 @@ require_once 'Zend/Validate/Hostname.php';
  */
 class Zend_Uri_Http extends Zend_Uri
 {
+    /**
+     * Character classes for validation regular expressions
+     */
+    const CHAR_ALNUM    = 'A-Za-z0-9';
+    const CHAR_MARK     = '-_.!~*\'()\[\]';
+    const CHAR_RESERVED = ';\/?:@&=+$,';
+    const CHAR_SEGMENT  = ':@&=+$,;';
+    const CHAR_UNWISE   = '{}|\\\\^`';
+    
     /**
      * HTTP username
      *
@@ -95,7 +104,7 @@ class Zend_Uri_Http extends Zend_Uri
      * @var array
      */
     protected $_regex = array();
-
+    
     /**
      * Constructor accepts a string $scheme (e.g., http, https) and a scheme-specific part of the URI
      * (e.g., example.com/path/to/resource?query=param#fragment)
@@ -111,16 +120,27 @@ class Zend_Uri_Http extends Zend_Uri
 
         // Set up grammar rules for validation via regular expressions. These
         // are to be used with slash-delimited regular expression strings.
-        $this->_regex['alphanum']   = '[^\W_]';
-        $this->_regex['escaped']    = '(?:%[\da-fA-F]{2})';
-        $this->_regex['mark']       = '[-_.!~*\'()\[\]]';
-        $this->_regex['reserved']   = '[;\/?:@&=+$,]';
-        $this->_regex['unreserved'] = '(?:' . $this->_regex['alphanum'] . '|' . $this->_regex['mark'] . ')';
-        $this->_regex['segment']    = '(?:(?:' . $this->_regex['unreserved'] . '|' . $this->_regex['escaped']
-                                    . '|[:@&=+$,;])*)';
-        $this->_regex['path']       = '(?:\/' . $this->_regex['segment'] . '?)+';
-        $this->_regex['uric']       = '(?:' . $this->_regex['reserved'] . '|' . $this->_regex['unreserved'] . '|'
-                                    . $this->_regex['escaped'] . ')';
+        
+        // Escaped special characters (eg. '%25' for '%') 
+        $this->_regex['escaped']    = '%[[:xdigit:]]{2}';
+        
+        // Unreserved characters
+        $this->_regex['unreserved'] = '[' . self::CHAR_ALNUM . self::CHAR_MARK . ']';
+        
+        // Segment can use escaped, unreserved or a set of additional chars
+        $this->_regex['segment']    = '(?:' . $this->_regex['escaped'] . '|[' .
+            self::CHAR_ALNUM . self::CHAR_MARK . self::CHAR_SEGMENT . '])*';
+        
+        // Path can be a series of segmets char strings seperated by '/'
+        $this->_regex['path']       = '(?:\/(?:' . $this->_regex['segment'] . ')?)+';
+        
+        // URI characters can be escaped, alphanumeric, mark or reserved chars
+        $this->_regex['uric']       = '(?:' . $this->_regex['escaped'] . '|[' .  
+            self::CHAR_ALNUM . self::CHAR_MARK . self::CHAR_RESERVED . 
+            
+        // If unwise chars are allowed, add them to the URI chars class
+            (self::$_config['allow_unwise'] ? self::CHAR_UNWISE : '') . '])';
+                                    
         // If no scheme-specific part was supplied, the user intends to create
         // a new URI with this object.  No further parsing is required.
         if (strlen($schemeSpecific) === 0) {
@@ -158,6 +178,7 @@ class Zend_Uri_Http extends Zend_Uri
         $schemeSpecific = isset($uri[1]) === true ? $uri[1] : '';
 
         if (in_array($scheme, array('http', 'https')) === false) {
+            require_once 'Zend/Uri/Exception.php';
             throw new Zend_Uri_Exception("Invalid scheme: '$scheme'");
         }
 
@@ -294,8 +315,9 @@ class Zend_Uri_Http extends Zend_Uri
         }
 
         // Check the username against the allowed values
-        $status = @preg_match('/^(' . $this->_regex['alphanum']  . '|' . $this->_regex['mark'] . '|'
-                            . $this->_regex['escaped'] . '|[;:&=+$,])+$/', $username);
+        $status = @preg_match('/^(?:' . $this->_regex['escaped'] . '|[' .
+            self::CHAR_ALNUM . self::CHAR_MARK . ';:&=+$,' . '])+$/', $username);
+                            
         if ($status === false) {
             require_once 'Zend/Uri/Exception.php';
             throw new Zend_Uri_Exception('Internal error: username validation failed');
@@ -360,8 +382,9 @@ class Zend_Uri_Http extends Zend_Uri
         }
 
         // Check the password against the allowed values
-        $status = @preg_match('/^(' . $this->_regex['alphanum']  . '|' . $this->_regex['mark'] . '|'
-                             . $this->_regex['escaped'] . '|[;:&=+$,])+$/', $password);
+        $status = @preg_match('/^(?:' . $this->_regex['escaped'] . '|[' .
+            self::CHAR_ALNUM . self::CHAR_MARK . ';:&=+$,' . '])+$/', $password);
+            
         if ($status === false) {
             require_once 'Zend/Uri/Exception.php';
             throw new Zend_Uri_Exception('Internal error: password validation failed.');

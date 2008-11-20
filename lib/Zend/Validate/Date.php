@@ -17,7 +17,7 @@
  * @package    Zend_Validate
  * @copyright  Copyright (c) 2005-2008 Zend Technologies USA Inc. (http://www.zend.com)
  * @license    http://framework.zend.com/license/new-bsd     New BSD License
- * @version    $Id: Date.php 11296 2008-09-08 19:46:57Z thomas $
+ * @version    $Id: Date.php 12062 2008-10-21 17:28:12Z thomas $
  */
 
 
@@ -112,8 +112,8 @@ class Zend_Validate_Date extends Zend_Validate_Abstract
         }
 
         require_once 'Zend/Locale.php';
-        if (!Zend_Locale::isLocale($locale, true)) {
-            if (!Zend_Locale::isLocale($locale, false)) {
+        if (!Zend_Locale::isLocale($locale, true, false)) {
+            if (!Zend_Locale::isLocale($locale, false, false)) {
                 require_once 'Zend/Validate/Exception.php';
                 throw new Zend_Validate_Exception("The locale '$locale' is no known locale");
             }
@@ -205,7 +205,7 @@ class Zend_Validate_Date extends Zend_Validate_Abstract
                                                   'fix_date' => false));
             if (isset($parsed['year']) and ((strpos(strtoupper($this->_format), 'YY') !== false) and
                 (strpos(strtoupper($this->_format), 'YYYY') === false))) {
-                $parsed['year'] = Zend_Date::_century($parsed['year']);
+                $parsed['year'] = Zend_Date::getFullYear($parsed['year']);
             }
         } catch (Exception $e) {
             // Date can not be parsed

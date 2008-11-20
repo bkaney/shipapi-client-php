@@ -1,6 +1,6 @@
 <?php
 
-class ShipApi_Base_test extends UnitTestCase
+class test_ShipApi_Base extends UnitTestCase
 {
 
     public $username;

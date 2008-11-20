@@ -41,13 +41,13 @@ class Zend_Validate_File_Size extends Zend_Validate_Abstract
     const TOO_SMALL = 'fileSizeTooSmall';
     const NOT_FOUND = 'fileSizeNotFound';
     /**#@-*/
-    
+
     /**
      * @var array Error message templates
      */
     protected $_messageTemplates = array(
-        self::TOO_BIG   => "The file '%value%' is bigger than allowed",
-        self::TOO_SMALL => "The file '%value%' is smaller than allowed",
+        self::TOO_BIG   => "Maximum allowed size for file '%value%' is '%max%' but '%size%' detected",
+        self::TOO_SMALL => "Minimum expected size for file '%value%' is '%min%' but '%size%' detected",
         self::NOT_FOUND => "The file '%value%' could not be found"
     );
 
@@ -55,8 +55,9 @@ class Zend_Validate_File_Size extends Zend_Validate_Abstract
      * @var array Error message template variables
      */
     protected $_messageVariables = array(
-        'min' => '_min',
-        'max' => '_max'
+        'min'  => '_min',
+        'max'  => '_max',
+        'size' => '_size',
     );
 
     /**
@@ -75,117 +76,189 @@ class Zend_Validate_File_Size extends Zend_Validate_Abstract
     protected $_max;
 
     /**
+     * Detected size
+     *
+     * @var integer
+     */
+    protected $_size;
+
+    /**
+     * Use bytestring ?
+     *
+     * @var boolean
+     */
+    protected $_useByteString = true;
+
+    /**
      * Sets validator options
      *
-     * Min limits the filesize, when used with max=null it is the maximum filesize
-     * It also accepts an array with the keys 'min' and 'max'
+     * If $options is a integer, it will be used as maximum filesize
+     * As Array is accepts the following keys:
+     * 'min': Minimum filesize
+     * 'max': Maximum filesize
+     * 'bytestring': Use bytestring or real size for messages
      *
-     * @param  integer|array $min Minimum filesize
-     * @param  integer       $max Maximum filesize
-     * @return void
+     * @param  integer|array $options Options for the adapter
      */
-    public function __construct($min, $max = null)
+    public function __construct($options)
     {
-        if (is_array($min)) {
-            $count = count($min);
-            if (array_key_exists('min', $min)) {
-                if (array_key_exists('max', $min)) {
-                    $max = $min['max'];
-                }
+        if ($options instanceof Zend_Config) {
+            $options = $options->toArray();
+        } elseif (is_string($options) || is_numeric($options)) {
+            $options = array('max' => $options);
+        } elseif (!is_array($options)) {
+            require_once 'Zend/Validate/Exception.php';
+            throw new Zend_Validate_Exception ('Invalid options to validator provided');
+        }
 
-                $min = $min['min'];
-            } elseif ($count === 2) {
-                $minValue = array_shift($min);
-                $max = array_shift($min);
-                $min = $minValue;
-            } elseif($count === 1) {
-                $min = array_shift($min);
-                $max = null;
-            } else {
-                $min = 0;
-                $max = null;
+        if (1 < func_num_args()) {
+            trigger_error('Multiple constructor options are deprecated in favor of a single options array', E_USER_NOTICE);
+            $argv = func_get_args();
+            array_shift($argv);
+            $options['max'] = array_shift($argv);
+            if (!empty($argv)) {
+                $options['bytestring'] = array_shift($argv);
             }
         }
 
-        if (empty($max)) {
-            $max = $min;
-            $min = 0;
+        if (isset($options['bytestring'])) {
+            $this->setUseByteString($options['bytestring']);
         }
 
-        $this->setMin($min);
-        $this->setMax($max);
+        if (isset($options['min'])) {
+            $this->setMin($options['min']);
+        }
+
+        if (isset($options['max'])) {
+            $this->setMax($options['max']);
+        }
     }
 
     /**
      * Returns the minimum filesize
      *
-     * @param  boolean $unit Return the value with unit, when false the plan bytes will be returned
+     * @param  boolean $byteString Use bytestring ?
      * @return integer
      */
-    public function getMin($unit = true)
+    public function setUseByteString($byteString = true)
     {
-        $unit = (bool) $unit;
-        $min  = $this->_min;
-        if ($unit) {
+        $this->_useByteString = (bool) $byteString;
+        return $this;
+    }
+
+    /**
+     * Will bytestring be used?
+     *
+     * @return boolean
+     */
+    public function useByteString()
+    {
+        return $this->_useByteString;
+    }
+
+    /**
+     * Returns the minimum filesize
+     *
+     * @param  bool $raw Whether or not to force return of the raw value (defaults off)
+     * @return integer|string
+     */
+    public function getMin($raw = false)
+    {
+        $min = $this->_min;
+        if (!$raw && $this->useByteString()) {
             $min = $this->_toByteString($min);
         }
+
         return $min;
     }
 
     /**
      * Sets the minimum filesize
      *
-     * @param  integer $min            The minimum filesize
-     * @return Zend_Validate_File_Size Provides a fluent interface
+     * @param  integer $min The minimum filesize
      * @throws Zend_Validate_Exception When min is greater than max
+     * @return Zend_Validate_File_Size Provides a fluent interface
      */
     public function setMin($min)
     {
-        $min = (integer) $this->_fromByteString($min);
-        if (($this->_max !== null) && ($min > $this->_max)) {
+        if (!is_string($min) and !is_numeric($min)) {
             require_once 'Zend/Validate/Exception.php';
-            throw new Zend_Validate_Exception("The minimum must be less than or equal to the maximum filesize, but $min >"
-                                            . " {$this->_max}");
+            throw new Zend_Validate_Exception ('Invalid options to validator provided');
         }
 
-        $this->_min = max(0, $min);
+        $min = (integer) $this->_fromByteString($min);
+        $max = $this->getMax(true);
+        if (($max !== null) && ($min > $max)) {
+            require_once 'Zend/Validate/Exception.php';
+            throw new Zend_Validate_Exception("The minimum must be less than or equal to the maximum filesize, but $min >"
+                                            . " $max");
+        }
+
+        $this->_min = $min;
         return $this;
     }
 
     /**
      * Returns the maximum filesize
      *
-     * @param  boolean $unit Return the value with unit, when false the plan bytes will be returned
-     * @return integer|null
+     * @param  bool $raw Whether or not to force return of the raw value (defaults off)
+     * @return integer|string
      */
-    public function getMax($unit = true)
+    public function getMax($raw = false)
     {
-        $unit = (bool) $unit;
-        $max  = $this->_max;
-        if ($unit) {
+        $max = $this->_max;
+        if (!$raw && $this->useByteString()) {
             $max = $this->_toByteString($max);
         }
+
         return $max;
     }
 
     /**
      * Sets the maximum filesize
      *
-     * @param  integer|null $max       The maximum filesize
-     * @return Zend_Validate_StringLength Provides a fluent interface
+     * @param  integer $max The maximum filesize
      * @throws Zend_Validate_Exception When max is smaller than min
+     * @return Zend_Validate_StringLength Provides a fluent interface
      */
     public function setMax($max)
     {
-        $max = (integer) $this->_fromByteString($max);
-        if (($this->_min !== null) && ($max < $this->_min)) {
+        if (!is_string($max) && !is_numeric($max)) {
             require_once 'Zend/Validate/Exception.php';
-            throw new Zend_Validate_Exception("The maximum must be greater than or equal to the minimum filesize, but "
-                                            . "$max < {$this->_min}");
-        } else {
-            $this->_max = $max;
+            throw new Zend_Validate_Exception ('Invalid options to validator provided');
         }
 
+        $max = (integer) $this->_fromByteString($max);
+        $min = $this->getMin(true);
+        if (($min !== null) && ($max < $min)) {
+            require_once 'Zend/Validate/Exception.php';
+            throw new Zend_Validate_Exception("The maximum must be greater than or equal to the minimum filesize, but "
+                                            . "$max < $min");
+        }
+
+        $this->_max = $max;
+        return $this;
+    }
+
+    /**
+     * Retrieve current detected file size
+     *
+     * @return int
+     */
+    protected function _getSize()
+    {
+        return $this->_size;
+    }
+
+    /**
+     * Set current size
+     *
+     * @param  int $size
+     * @return Zend_Validate_File_Size
+     */
+    protected function _setSize($size)
+    {
+        $this->_size = $size;
         return $this;
     }
 
@@ -202,30 +275,44 @@ class Zend_Validate_File_Size extends Zend_Validate_Abstract
     public function isValid($value, $file = null)
     {
         // Is file readable ?
-        if (!@is_readable($value)) {
-            $this->_throw($file, self::NOT_FOUND);
-            return false;
+        require_once 'Zend/Loader.php';
+        if (!Zend_Loader::isReadable($value)) {
+            return $this->_throw($file, self::NOT_FOUND);
         }
 
         // limited to 4GB files
-        $size = sprintf("%u",@filesize($value));
-        $this->_setValue($size);
+        $size = sprintf("%u", @filesize($value));
+        $this->_setSize($size);
 
         // Check to see if it's smaller than min size
-        if (($this->_min !== null) && ($size < $this->_min)) {
-            $this->_throw($file, self::TOO_SMALL);
+        $min = $this->getMin(true);
+        $max = $this->getMax(true);
+        if (($min !== null) && ($size < $min)) {
+            if ($this->useByteString()) {
+                $this->setMin($this->_toByteString($min));
+                $this->_throw($file, self::TOO_SMALL);
+                $this->setMin($min);
+            } else {
+                $this->_throw($file, self::TOO_SMALL);
+            }
         }
 
         // Check to see if it's larger than max size
-        if (($this->_max !== null) && ($this->_max < $size)) {
-            $this->_throw($file, self::TOO_BIG);
+        if (($max !== null) && ($max < $size)) {
+            if ($this->useByteString()) {
+                $this->setMax($this->_toByteString($max));
+                $this->_throw($file, self::TOO_BIG);
+                $this->setMax($max);
+            } else {
+                $this->_throw($file, self::TOO_BIG);
+            }
         }
 
         if (count($this->_messages) > 0) {
             return false;
-        } else {
-            return true;
         }
+
+        return true;
     }
 
     /**
@@ -234,13 +321,13 @@ class Zend_Validate_File_Size extends Zend_Validate_Abstract
      * @param  integer $size
      * @return string
      */
-    protected function _toByteString($size) 
+    protected function _toByteString($size)
     {
         $sizes = array('B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB');
-        for ($i=0; $size > 1024 && $i < 9; $i++) {
+        for ($i=0; $size >= 1024 && $i < 9; $i++) {
             $size /= 1024;
         }
-        return round($size, 2).$sizes[$i];
+        return round($size, 2) . $sizes[$i];
     }
 
     /**
@@ -249,7 +336,7 @@ class Zend_Validate_File_Size extends Zend_Validate_Abstract
      * @param  string $size
      * @return integer
      */
-    protected function _fromByteString($size) 
+    protected function _fromByteString($size)
     {
         if (is_numeric($size)) {
             return (integer) $size;

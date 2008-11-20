@@ -2,7 +2,6 @@
 
 require_once('Zend/Http/Client/Adapter/Test.php');
 
-
 class ShipApi_Request_test extends UnitTestCase
 {
 
@@ -19,14 +18,14 @@ class ShipApi_Request_test extends UnitTestCase
     private function responseHeader()
     {
         return "HTTP/1.1 200 OK" . "\r\n" .
-            "Content-type: text/xml" . "\r\n" . "\r\n" . 
-            '<?xml version="1.0" encoding="UTF-8"?>';
+            "Content-type: text/xml" . "\r\n" . "\r\n";
     }
 
     public function testShipApi_Request_get()
     {
         $this->adapter->setResponse(
             $this->responseHeader() .
+            '<?xml version="1.0" encoding="UTF-8"?>' .
             '<shipments>
                 <shipment>
                     <id type="integer">10</id>
@@ -52,6 +51,7 @@ class ShipApi_Request_test extends UnitTestCase
     {
         $this->adapter->setResponse(
             $this->responseHeader() .
+            '<?xml version="1.0" encoding="UTF-8"?>' .
             '<shipment>
                 <id type="integer">10</id>
                 <created-at type="datetime">2008-10-06T17:26:01-04:00</created-at>
@@ -68,6 +68,7 @@ class ShipApi_Request_test extends UnitTestCase
     {
         $this->adapter->setResponse(
             $this->responseHeader() .
+            '<?xml version="1.0" encoding="UTF-8"?>' .
             '<shipment>
                 <id type="integer">12</id>
                 <created-at type="datetime">2008-10-06T17:26:01-04:00</created-at>
@@ -85,36 +86,25 @@ class ShipApi_Request_test extends UnitTestCase
 
     public function testShipApi_Request_put()
     {
-        print " P : Pending `" . __FUNCTION__ . "' until we work out Zend_Rest_Client's PUT option\n"; return;
-
+        print " P : Pending `" . __FUNCTION__ . "' until we work on a better return handler with no XML.\n"; return;
+        
         $this->adapter->setResponse(
-            $this->responseHeader() .
-            '<shipment>
-                <id type="integer">13</id>
-                <created-at type="datetime">2008-10-06T17:26:01-04:00</created-at>
-                <updated-at type="datetime">2008-10-06T17:26:06-04:00</updated-at>
-                <status>closed</status>
-            </shipment>'
+            $this->responseHeader()
         );
 
         $data = array('status' => 'closed');
         $shipment = $this->shipapi->put('/shipments/13', $data);
-        $this->assertEqual($shipment->status(), 'closed');
     }
 
     public function testShipApi_Request_delete()
     {
-        print " P : Pending `" . __FUNCTION__ . "' until we work on a better exception handler.\n"; return;
+        print " P : Pending `" . __FUNCTION__ . "' until we work on a better return handler with no XML.\n"; return;
 
         $this->adapter->setResponse(
-            $this->responseHeader() .
-            '<shipment></shipment>'
+            $this->responseHeader()
         );
 
         $shipment = $this->shipapi->delete('/shipments/13');
-        $this->expectError(
-            $shipment->shipment->id()
-        );
     }
 }
 
@@ -162,7 +152,5 @@ class ShipApi_Request_static_methods_test extends UnitTestCase
         $node = ShipApi_Request::parseNode($this->resource_nested);
         $this->assertEqual($node, 'packages');
     }
-
-
 
 }

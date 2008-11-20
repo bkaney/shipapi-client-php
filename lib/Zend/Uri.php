@@ -16,7 +16,7 @@
  * @package   Zend_Uri
  * @copyright Copyright (c) 2005-2008 Zend Technologies USA Inc. (http://www.zend.com)
  * @license   http://framework.zend.com/license/new-bsd     New BSD License
- * @version   $Id: Uri.php 9656 2008-06-10 16:21:13Z dasprid $
+ * @version   $Id: Uri.php 12037 2008-10-20 18:54:44Z shahar $
  */
 
 /**
@@ -41,6 +41,15 @@ abstract class Zend_Uri
      */
     protected $_scheme = '';
 
+    /**
+     * Global configuration array
+     *
+     * @var array
+     */
+    static protected $_config = array(
+        'allow_unwise' => false
+    );
+    
     /**
      * Return a string representation of this URI.
      *
@@ -139,6 +148,18 @@ abstract class Zend_Uri
         }
     }
 
+    /**
+     * Set global configuration options
+     *
+     * @param array $config
+     */
+    static public function setConfig(array $config)
+    {
+        foreach ($config as $k => $v) {
+            self::$_config[$k] = $v;
+        }
+    }
+    
     /**
      * Zend_Uri and its subclasses cannot be instantiated directly.
      * Use Zend_Uri::factory() to return a new Zend_Uri object.
