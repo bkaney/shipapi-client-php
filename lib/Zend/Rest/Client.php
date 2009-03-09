@@ -83,11 +83,24 @@ class Zend_Rest_Client extends Zend_Service_Abstract
     /**
      * Retrieve the current request URI object
      *
-     * @return Zend_Uri_Http
+     * @param string|false $user User name or false disable authentication
+     * @param string $password Password
+     * @param string $type Authentication type
+     * @return Zend_Http_Client
      */
     public function getUri()
     {
         return $this->_uri;
+    }
+
+
+    /**
+     * This wraps around the setAuth method in the HttpClient.
+     */
+    public function setAuth($username, $password='', $type=Zend_Http_Client::AUTH_BASIC)
+    {
+        $client = self::getHttpClient();
+        return $client->setAuth($username, $password, $type);
     }
 
     /**

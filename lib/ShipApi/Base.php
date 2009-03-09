@@ -68,7 +68,7 @@ class ShipApi
 
     private function sendRequest($method, $resource, array $data=null)
     {
-        $this->request = new ShipAPI_Request($this);
+        $this->request = new ShipApi_Request($this);
         return $this->request->sendRequest($method,$resource,$data);
     }
 
